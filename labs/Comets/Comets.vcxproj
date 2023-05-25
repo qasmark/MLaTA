@@ -21,8 +21,8 @@
   <PropertyGroup Label="Globals">
     <VCProjectVersion>16.0</VCProjectVersion>
     <Keyword>Win32Proj</Keyword>
-    <ProjectGuid>{22a88940-e2f8-41ff-bcd8-1f3e567dabe8}</ProjectGuid>
-    <RootNamespace>Maze</RootNamespace>
+    <ProjectGuid>{e51f33bd-d34b-4299-8264-b93086cb8ea7}</ProjectGuid>
+    <RootNamespace>Comets</RootNamespace>
     <WindowsTargetPlatformVersion>10.0</WindowsTargetPlatformVersion>
   </PropertyGroup>
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.Default.props" />
@@ -127,7 +127,7 @@
     </Link>
   </ItemDefinitionGroup>
   <ItemGroup>
-    <ClCompile Include="Maze.cpp" />
+    <ClCompile Include="Comets.cpp" />
   </ItemGroup>
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.targets" />
   <ImportGroup Label="ExtensionTargets">

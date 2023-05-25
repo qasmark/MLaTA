@@ -42,224 +42,96 @@ No
 #include <iostream>
 #include <fstream>
 #include <vector>
-#include <queue>
 #include <limits>
 
-const int INF = std::numeric_limits<int>::max();
+const int INF = std::numeric_limits<int>::min(); // Используем негативную бесконечность
 
-class Edge {
-public:
-    int from, to, weight;
-
-    Edge(int _from, int _to, int _weight) : from(_from), to(_to), weight(_weight) {}
+struct Edge {
+    int source;
+    int destination;
+    int weight;
 };
 
-class Graph {
-public:
-    int size;
+void bellmanFord(int N, int M, int A, const std::vector<Edge>& edges) {
+    std::vector<int> distance(N, INF);
+    std::vector<int> parent(N, -1);
+    distance[A - 1] = 0;
 
-    Graph(int _size) : size(_size) {}
-
-    virtual ~Graph() {}
-
-    virtual void add_edge(int from, int to, int weight) = 0;
-
-    virtual std::vector<int> shortest_path(int source) = 0;
-
-    virtual std::vector<int> longest_path(int source) = 0;
-};
-
-class AdjacencyListGraph : public Graph {
-public:
-    std::vector<std::vector<Edge>> adj;
-
-    AdjacencyListGraph(int _size) : Graph(_size), adj(_size) {}
-
-    void add_edge(int from, int to, int weight) override {
-        adj[from].emplace_back(from, to, weight);
+    // Relax edges N-1 times
+    for (int i = 1; i < N; ++i) {
+        for (int j = 0; j < M; ++j) {
+            int u = edges[j].source - 1;
+            int v = edges[j].destination - 1;
+            int weight = edges[j].weight;
+            if (distance[u] != INF && distance[u] + weight > distance[v]) {
+                distance[v] = distance[u] + weight;
+                parent[v] = u;
+            }
+        }
     }
 
-    std::vector<int> shortest_path(int source) override {
-        std::vector<int> dist(size, INF);
-        std::queue<int> q;
-        std::vector<bool> in_queue(size, false);
-
-        dist[source] = 0;
-        q.push(source);
-        in_queue[source] = true;
-
-        while (!q.empty()) {
-            int u = q.front();
-            q.pop();
-            in_queue[u] = false;
-
-            for (const auto& edge : adj[u]) {
-                int v = edge.to;
-                int weight = edge.weight;
-
-                if (dist[u] + weight < dist[v]) {
-                    dist[v] = dist[u] + weight;
-
-                    if (!in_queue[v]) {
-                        q.push(v);
-                        in_queue[v] = true;
-                    }
-                }
+    // Check for negative cycles
+    for (int j = 0; j < M; ++j) {
+        int u = edges[j].source - 1;
+        int v = edges[j].destination - 1;
+        int weight = edges[j].weight;
+        if (distance[u] != INF && distance[u] + weight > distance[v]) {
+            std::vector<int> cycle;
+            int current = v;
+            while (current != u) {
+                cycle.push_back(current + 1);
+                current = parent[current];
             }
-        }
+            cycle.push_back(u + 1);
 
-        return dist;
+            std::ofstream output("OUTPUT.TXT");
+            output << "No" << std::endl;
+            output << cycle.size() << " ";
+            for (int i = cycle.size() - 1; i >= 0; --i) {
+                output << cycle[i] << " ";
+            }
+            output.close();
+            return;
+        }
     }
 
-    std::vector<int> longest_path(int source) override {
-        std::vector<int> dist(size, -INF);
-        std::vector<int> pred(size, -1);
-        std::vector<int> topo_order;
-        std::vector<bool> visited(size, false);
-        bool has_cycle = false;
-
-        dfs(source, visited, pred, has_cycle, topo_order);
-
-        if (has_cycle) {
-            for (int i = 0; i < size; i++) {
-                if (visited[i]) {
-                    std::vector<int> cycle;
-                    for (int j = i; j != i || cycle.empty(); j = pred[j]) {
-                        cycle.push_back(j);
-                    }
-
-                    std::reverse(cycle.begin(), cycle.end());
-
-                    std::ofstream output_file("OUTPUT.TXT");
-
-                    output_file << "No\n";
-                    output_file << cycle.size() << ' ';
-                    for (int u : cycle) {
-                        output_file << u + 1 << ' ';
-                    }
-                    output_file << cycle.front() + 1 << '\n';
-
-                    return {};
-                }
-            }
+    // Output longest paths
+    std::ofstream output("OUTPUT.TXT");
+    for (int i = 0; i < N; ++i) {
+        if (distance[i] == INF) {
+            output << "No" << std::endl;
         }
-
-        dist[source] = 0;
-
-        for (int u : topo_order) {
-            if (dist[u] == -INF) {
-                continue;
+        else {
+            std::vector<int> path;
+            int current = i;
+            while (current != -1) {
+                path.push_back(current + 1);
+                current = parent[current];
             }
 
-            for (const auto& edge : adj[u]) {
-                int v = edge.to;
-                int weight = edge.weight;
-
-                if (dist[u] + weight > dist[v]) {
-                    dist[v] = dist[u] + weight;
-                    pred[v] = u;
-                }
+            output << distance[i] << " ";
+            output << path.size() << " ";
+            for (int j = path.size() - 1; j >= 0; --j) {
+                output << path[j] << " ";
             }
+            output << std::endl;
         }
-
-        std::vector<std::pair<int, int>> path_sizes(size);
-        for (int i = 0; i < size; i++) {
-            if (dist[i] > -INF) {
-                path_sizes[i] = std::make_pair(dist[i], get_path_size(pred, i));
-            }
-        }
-
-        return get_max_path(path_sizes);
     }
-
-private:
-    void dfs(int u, std::vector<bool>& visited, std::vector<int>& pred, bool& has_cycle,
-        std::vector<int>& topo_order) {
-        visited[u] = true;
-
-        for (const auto& edge : adj[u]) {
-            int v = edge.to;
-
-            if (!visited[v]) {
-                pred[v] = u;
-                dfs(v, visited, pred, has_cycle, topo_order);
-            }
-            else if (visited[v] && pred[u] != v) {
-                has_cycle = true;
-            }
-        }
-
-        topo_order.push_back(u);
-    }
-
-    int get_path_size(const std::vector<int>& pred, int u) {
-        if (pred[u] == -1) {
-            return 1;
-        }
-
-        return 1 + get_path_size(pred, pred[u]);
-    }
-
-    std::vector<int> get_max_path(const std::vector<std::pair<int, int>>& path_sizes) {
-        std::vector<int> max_path;
-
-        for (int i = 0; i < size; i++) {
-            if (path_sizes[i].first == -INF) {
-                std::ofstream output_file("OUTPUT.TXT");
-                output_file << "No\n";
-                return {};
-            }
-        }
-
-        int max_path_size = 0;
-        for (const auto& path : path_sizes) {
-            if (path.second > max_path_size) {
-                max_path_size = path.second;
-            }
-        }
-
-        for (const auto& path : path_sizes) {
-            if (path.second == max_path_size) {
-                max_path.push_back(path.first);
-            }
-        }
-
-        std::ofstream output_file("OUTPUT.TXT");
-
-        for (int u : max_path) {
-            output_file << path_sizes[u].first << ' ';
-            output_file << path_sizes[u].second << ' ';
-            int v = u;
-            while (v != -1) {
-                output_file << v + 1 << ' ';
-                v = pred[v];
-            }
-            output_file << '\n';
-        }
-
-        return max_path;
-    }
-};
+    output.close();
+}
 
 int main() {
-    std::ifstream input_file("INPUT.TXT");
+    std::ifstream input("INPUT.TXT");
+    int N, M, A;
+    input >> N >> M >> A;
 
-    int n, m, s;
-    input_file >> n >> m >> s;
-    s--;
-
-    AdjacencyListGraph graph(n);
-
-    for (int i = 0; i < m; i++) {
-        int u, v, w;
-        input_file >> u >> v >> w;
-        u--;
-        v--;
-
-        graph.add_edge(u, v, w);
+    std::vector<Edge> edges(M);
+    for (int i = 0; i < M; ++i) {
+        input >> edges[i].source >> edges[i].destination >> edges[i].weight;
     }
+    input.close();
 
-    graph.longest_path(s);
+    bellmanFord(N, M, A, edges);
 
     return 0;
 }

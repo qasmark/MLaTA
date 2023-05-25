@@ -1,13 +1,7 @@
-﻿
-/*
-Лабиринт представляет собой квадрат, состоящий из NxN сегментов. Каждый из сегментов может быть либо пустым, 
-либо заполненным монолитной каменной стеной. Гарантируется, что левый верхний и правый нижний сегменты пусты. 
-Лабиринт обнесён сверху, снизу, слева и справа стенами, оставляющими свободными только левый верхний и правый нижний углы.
-Директор лабиринта решил покрасить стены лабиринта, видимые изнутри (см. рисунок). 
-Помогите ему рассчитать количество краски, необходимой для этого.
+﻿/*
+Лабиринт представляет собой квадрат, состоящий из NxN сегментов. Каждый из сегментов может быть либо пустым, либо заполненным монолитной каменной стеной. Гарантируется, что левый верхний и правый нижний сегменты пусты. Лабиринт обнесён сверху, снизу, слева и справа стенами, оставляющими свободными только левый верхний и правый нижний углы. Директор лабиринта решил покрасить стены лабиринта, видимые изнутри (см. рисунок). Помогите ему рассчитать количество краски, необходимой для этого.
 
-Ввод из файла INPUT.TXT. В первой строке находится число N, затем идут N строк по N символов: точка обозначает пустой сегмент, 
-решётка - сегмент со стеной.
+Ввод из файла INPUT.TXT. В первой строке находится число N, затем идут N строк по N символов: точка обозначает пустой сегмент, решётка - сегмент со стеной.
 Вывод в файл OUTPUT.TXT. Вывести одно число - площадь видимой части внутренних стен лабиринта в квадратных метрах.
 Ограничения: 3 ≤ N ≤ 33, размер сегмента 3 x 3 м, высота стен 3 м, время 1 с.
 Пример
@@ -21,81 +15,79 @@
 Вывод
 198
 
-    Игнатьев Влад, ПС-22
-    Visual Studio Community 2022
+
 */
-
-
 #include <iostream>
+#include <fstream>
 #include <vector>
+
 using namespace std;
 
-int n, area = 0;
-vector<vector<char>> maze;
-vector<vector<int>> wallCount;
+struct Point {
+    int x;
+    int y;
+};
 
-// Функция проверки вхождения точки в лабиринт
-bool inMaze(int x, int y) {
-    return x >= 0 && x < n&& y >= 0 && y < n;
-}
+void exploreNeighbours(Point p, vector<vector<char>>& mainVector, int n, int& counter) {
+    int dirX[4] = { 0, 0, -1, 1 };
+    int dirY[4] = { -1, 1, 0, 0 };
 
-// Функция подсчета площади клетки
-int getCellArea(int x, int y) {
-    int count = 0;
-    if (inMaze(x - 1, y) && maze[x - 1][y] == '#') {
-        count += wallCount[x - 1][y];
-    }
-    if (inMaze(x, y - 1) && maze[x][y - 1] == '#') {
-        count += wallCount[x][y - 1];
-    }
-    if (maze[x][y] == '#') {
-        return 6 - count;
-    }
-    else {
-        return 9 - count;
-    }
-}
-
-// Функция поиска пути из точки (x, y)
-void dfs(int x, int y) {
-    wallCount[x][y] = 0;
-    // Перебираем соседние точки
-    int dx[] = { -1, 0, 1, 0 };
-    int dy[] = { 0, 1, 0, -1 };
     for (int i = 0; i < 4; i++) {
-        int nx = x + dx[i];
-        int ny = y + dy[i];
-        // Если соседняя точка в лабиринте, то увеличиваем количество учтенных стен
-        if (inMaze(nx, ny) && maze[nx][ny] == '#') {
-            wallCount[nx][ny]++;
+        Point nextPoint = p;
+        nextPoint.x += dirX[i];
+        nextPoint.y += dirY[i];
+
+        if ((nextPoint.x == 0 && nextPoint.y == -1) || (nextPoint.x == -1 && nextPoint.y == 0))
+            continue;
+        if ((nextPoint.x == n && nextPoint.y == n - 1) || (nextPoint.x == n - 1 && nextPoint.y == n))
+            continue;
+
+        if (nextPoint.x < 0 || nextPoint.x > n - 1 || nextPoint.y < 0 || nextPoint.y > n - 1 ||
+            mainVector[nextPoint.y][nextPoint.x] == '#') {
+            counter++;
+            continue;
         }
-    }
-    // Вычисляем площадь текущей клетки и добавляем ее к общей площади
-    area += getCellArea(x, y);
-    // Перебираем соседние точки
-    for (int i = 0; i < 4; i++) {
-        int nx = x + dx[i];
-        int ny = y + dy[i];
-        // Если соседняя точка в лабиринте и не посещена, то продолжаем поиск
-        if (inMaze(nx, ny) && !wallCount[nx][ny]) {
-            dfs(nx, ny);
+
+        if (mainVector[nextPoint.y][nextPoint.x] == 'O') {
+            continue;
+        }
+
+        if (mainVector[nextPoint.y][nextPoint.x] == '.') {
+            mainVector[nextPoint.y][nextPoint.x] = 'O';
+            exploreNeighbours(nextPoint, mainVector, n, counter);
         }
     }
 }
 
 int main() {
     // Чтение входных данных
-    cin >> n;
-    maze.resize(n, vector<char>(n));
-    wallCount.resize(n, vector<int>(n, 0));
-    for (int i = 0; i < n; i++) {
-        for (int j = 0; j < n; j++) {
-            cin >> maze[i][j];
+    ifstream inputFile("INPUT.TXT");
+    int N;
+    inputFile >> N;
+
+    vector<vector<char>> labyrinth(N, vector<char>(N));
+    for (int i = 0; i < N; i++) {
+        for (int j = 0; j < N; j++) {
+            inputFile >> labyrinth[i][j];
         }
     }
-    // Поиск пути из левого верхнего угла
-    dfs(0, 0);
-    // Вывод результата
-    cout << area << endl;
+    inputFile.close();
+
+    // Инициализация переменных
+    int visibleArea = 0;
+    int segmentArea = 3 * 3;  // Площадь одного сегмента (3 x 3)
+
+    // Поиск видимых стен
+    Point start = { 0, 0 };
+    int counter = 0;
+    exploreNeighbours(start, labyrinth, N, counter);
+    visibleArea = counter * segmentArea;
+
+    // Запись результата
+    ofstream outputFile("OUTPUT.TXT");
+    outputFile << visibleArea;
+    outputFile.close();
+
     return 0;
 }
+
