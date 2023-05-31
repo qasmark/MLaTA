@@ -1,9 +1,18 @@
 ﻿/*
-Лабиринт представляет собой квадрат, состоящий из NxN сегментов. Каждый из сегментов может быть либо пустым, либо заполненным монолитной каменной стеной. Гарантируется, что левый верхний и правый нижний сегменты пусты. Лабиринт обнесён сверху, снизу, слева и справа стенами, оставляющими свободными только левый верхний и правый нижний углы. Директор лабиринта решил покрасить стены лабиринта, видимые изнутри (см. рисунок). Помогите ему рассчитать количество краски, необходимой для этого.
+1.1. Покраска лабиринта (5)
+    Лабиринт представляет собой квадрат, состоящий из NxN сегментов. 
+    Каждый из сегментов может быть либо пустым, либо заполненным монолитной каменной стеной. 
+    Гарантируется, что левый верхний и правый нижний сегменты пусты. 
+    Лабиринт обнесён сверху, снизу, слева и справа стенами, оставляющими свободными только левый верхний и 
+    правый нижний углы. 
+    Директор лабиринта решил покрасить стены лабиринта, видимые изнутри (см. рисунок). 
+    Помогите ему рассчитать количество краски, необходимой для этого.
 
-Ввод из файла INPUT.TXT. В первой строке находится число N, затем идут N строк по N символов: точка обозначает пустой сегмент, решётка - сегмент со стеной.
-Вывод в файл OUTPUT.TXT. Вывести одно число - площадь видимой части внутренних стен лабиринта в квадратных метрах.
-Ограничения: 3 ≤ N ≤ 33, размер сегмента 3 x 3 м, высота стен 3 м, время 1 с.
+    Ввод из файла INPUT.TXT. В первой строке находится число N, затем идут N строк по N символов: 
+    точка обозначает пустой сегмент, решётка - сегмент со стеной.
+    Вывод в файл OUTPUT.TXT. Вывести одно число - площадь видимой части внутренних стен лабиринта в 
+    квадратных метрах.
+    Ограничения: 3 ≤ N ≤ 33, размер сегмента 3 x 3 м, высота стен 3 м, время 1 с.
 Пример
 Ввод
 5
@@ -16,78 +25,90 @@
 198
 
 
+    Игнатьев Владислав, ПС-22
+    Visual Studio Community 2022
+
+Суть решения:
+    Задача очень похожа на задачу "Грядки", разбор которой был предоставлен в документе перед условием задачи
+    Мне всего стоило взять перебор с возвратом из этой задачи, и чуть-чуть изменить его:
+    1. Я решил обнести дополнительно лабиринт стенами по периметру, чтобы не возиться с проверками на выход
+    за пределы матрицы (в конце я просто вычитаю 4 стенки, которые стоят у начала и конца лабиринта снаружи)
+
+    1.1 Также 31 мая в 3 часа ночи мне пришла идея, а что если у нас нет выхода из лабиринта? Перечетав условие, я
+    понял, что вы написали следующее: "...гарантируется, что левый верхний и правый нижний сегменты пусты...".
+    Это значило, что лабиринт мог быть целиком заполнен # или у нас будет непроходимая стена. 
+    Я решил эту проблему с помощью подсчета стен как с начальной, так и с конечной клетки.
+
+    2. Чтобы не возиться с матрицей булевых значений, я решил, что лучше будет помечать посещенные клетки X.
+    Так тратиться меньше памяти и работать с перебором легче.
+
+    3. Да, решение с помощью рекурсии :)
+    Мне кажется, этот алгоритм сможет даже делать подсчёт для прямоугольных (N x M, N != M) лабиринтов. 
+    Надо только правильно реализовать ввод
 */
+#include <vector>
 #include <iostream>
 #include <fstream>
-#include <vector>
 
-using namespace std;
+constexpr char target = 'X'; // метка, что уже были в этой вершине
 
-struct Point {
-    int x;
-    int y;
-};
-
-void exploreNeighbours(Point p, vector<vector<char>>& mainVector, int n, int& counter) {
-    int dirX[4] = { 0, 0, -1, 1 };
-    int dirY[4] = { -1, 1, 0, 0 };
-
-    for (int i = 0; i < 4; i++) {
-        Point nextPoint = p;
-        nextPoint.x += dirX[i];
-        nextPoint.y += dirY[i];
-
-        if ((nextPoint.x == 0 && nextPoint.y == -1) || (nextPoint.x == -1 && nextPoint.y == 0))
-            continue;
-        if ((nextPoint.x == n && nextPoint.y == n - 1) || (nextPoint.x == n - 1 && nextPoint.y == n))
-            continue;
-
-        if (nextPoint.x < 0 || nextPoint.x > n - 1 || nextPoint.y < 0 || nextPoint.y > n - 1 ||
-            mainVector[nextPoint.y][nextPoint.x] == '#') {
-            counter++;
-            continue;
-        }
-
-        if (mainVector[nextPoint.y][nextPoint.x] == 'O') {
-            continue;
-        }
-
-        if (mainVector[nextPoint.y][nextPoint.x] == '.') {
-            mainVector[nextPoint.y][nextPoint.x] = 'O';
-            exploreNeighbours(nextPoint, mainVector, n, counter);
-        }
+void findWalls(int x, int y, std::vector<std::string>& rows, int& count) 
+{
+    if (rows[y][x] != '.')
+    {
+        return;
     }
+    if (rows[y + 1][x] == '#')
+    {
+        count++;
+    }
+    if (rows[y - 1][x] == '#')
+    {
+        count++;
+    }
+    if (rows[y][x + 1] == '#')
+    {
+        count++;
+    }
+
+    if (rows[y][x - 1] == '#')
+    {
+        count++;
+    }
+    rows[y][x] = target;
+    findWalls(x + 1, y, rows, count);
+    findWalls(x - 1, y, rows, count);
+    findWalls(x, y + 1, rows, count);
+    findWalls(x, y - 1, rows, count);
 }
 
-int main() {
-    // Чтение входных данных
-    ifstream inputFile("INPUT.TXT");
+int main() 
+{
+    std::ifstream fin("cin.txt");
+    std::ofstream fout("cout.txt");
+
     int N;
-    inputFile >> N;
+    int count = 0;
+    fin >> N;
 
-    vector<vector<char>> labyrinth(N, vector<char>(N));
-    for (int i = 0; i < N; i++) {
-        for (int j = 0; j < N; j++) {
-            inputFile >> labyrinth[i][j];
-        }
+    std::vector<std::string> maze;
+    maze.resize(N + 2);
+    maze[0] = std::string(N + 2, '#');
+    maze[N + 1] = std::string(N + 2, '#');
+
+    std::string temp;
+    for (int i = 1; i < N + 1; ++i) 
+    {
+        fin >> temp;
+        maze[i] = "#" + temp + "#";
+        temp.clear();
     }
-    inputFile.close();
 
-    // Инициализация переменных
-    int visibleArea = 0;
-    int segmentArea = 3 * 3;  // Площадь одного сегмента (3 x 3)
+    findWalls(1, 1, maze, count);
+    findWalls(N, N, maze, count);
 
-    // Поиск видимых стен
-    Point start = { 0, 0 };
-    int counter = 0;
-    exploreNeighbours(start, labyrinth, N, counter);
-    visibleArea = counter * segmentArea;
-
-    // Запись результата
-    ofstream outputFile("OUTPUT.TXT");
-    outputFile << visibleArea;
-    outputFile.close();
+    //std::cout << (count - 4) * 9 << std::endl;
+    fout << (count - 4) * 9 << std::endl;
 
     return 0;
 }
-
