@@ -1,0 +1,3 @@
+Почему-то gmail отклоняла отправку письма, вот ссылки на источники:
+https://translated.turbopages.org/proxy_u/en-ru.ru.448bb075-6478f25a-9dd87235-74722d776562/https/www.geeksforgeeks.org/edge-relaxation-property-for-dijkstras-algorithm-and-bellman-fords-algorithm/
+https://www.geeksforgeeks.org/bellman-ford-algorithm-simple-implementation/
