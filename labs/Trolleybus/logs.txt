@@ -1,0 +1,7 @@
+For t = 0 sum of waiting is 13
+For t = 1 sum of waiting is 17
+For t = 2 sum of waiting is 7
+For t = 3 sum of waiting is 11
+For t = 4 sum of waiting is 15
+For t = 5 sum of waiting is 12
+For t = 6 sum of waiting is 9
