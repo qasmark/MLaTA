@@ -3,28 +3,18 @@
 #include<iostream>
 #include<stdexcept>
 
-Expression_Parser::Expression_Parser(const std::vector<std::string>& input)
+BuildingAST::BuildingAST(const std::vector<std::string>& input)
 {
-    tokens = input;//take in the expression
+    tokens = input;
 };
 
-std::shared_ptr<node> Expression_Parser::toTree()
+std::shared_ptr<node> BuildingAST::convertToTree()
 {
     try {
-        //Loop through all tokens in expression
         for (unsigned int i = 0; i < tokens.size(); i++)
         {
-            //if the token is not an operator or function
-            if (!(tokens[i] == "+" ||
-                tokens[i] == "-" ||
-                tokens[i] == "/" ||
-                tokens[i] == "*" ||
-                tokens[i] == "^" ||
-                tokens[i] == "cos" ||
-                tokens[i] == "tan" ||
-                tokens[i] == "sin"))
-
-                expression_tree.emplace_back(new node(tokens[i]));//add the token to the expression tree
+            if (!(tokens[i] == "+" || tokens[i] == "-" || tokens[i] == "/" || tokens[i] == "*" || tokens[i] == "^"))
+                expressionTree.emplace_back(new node(tokens[i]));
             else
             {
                 if (tokens[i] == "cos" ||//if the token is a function
@@ -33,30 +23,30 @@ std::shared_ptr<node> Expression_Parser::toTree()
 
 
                     temp = std::make_shared<node>((tokens[i]));//create a new node
-                    temp->right = expression_tree[expression_tree.size() - 1];//have the right tree contain the furthest token in the vector
-                    expression_tree.pop_back();//take the furthest token in the vector away
-                    expression_tree.push_back(temp);//put the new token in the vector
+                    temp->right = expressionTree[expressionTree.size() - 1];//have the right tree contain the furthest token in the vector
+                    expressionTree.pop_back();//take the furthest token in the vector away
+                    expressionTree.push_back(temp);//put the new token in the vector
                 }
 
                 else//if the token is an operator
                 {
                     temp = std::make_shared<node>(tokens[i]);//create a new node
-                    temp->right = (expression_tree[expression_tree.size() - 1]);//have the right tree set to the furthest token in the vector
-                    expression_tree.pop_back();//take the furthest token in the vector away
+                    temp->right = (expressionTree[expressionTree.size() - 1]);//have the right tree set to the furthest token in the vector
+                    expressionTree.pop_back();//take the furthest token in the vector away
 
-                    if (expression_tree.size() > 0)
+                    if (expressionTree.size() > 0)
                     {
-                        temp->left = (expression_tree[expression_tree.size() - 1]);//have the left tree set to the furthest token in the vector
-                        expression_tree.pop_back();//take the furthest token in the vector away
+                        temp->left = (expressionTree[expressionTree.size() - 1]);//have the left tree set to the furthest token in the vector
+                        expressionTree.pop_back();//take the furthest token in the vector away
                     }
 
-                    expression_tree.push_back(temp);//put the new token in the vector
+                    expressionTree.push_back(temp);//put the new token in the vector
                 }
             }
 
         }
-        temp = expression_tree.size() > 0 ? expression_tree[expression_tree.size() - 1] : nullptr;//get the root node of the expression tree
-        expression_tree.resize(0);//reset the expression tree
+        temp = expressionTree.size() > 0 ? expressionTree[expressionTree.size() - 1] : nullptr;//get the root node of the expression tree
+        expressionTree.resize(0);//reset the expression tree
         return temp;//return the root node of the expression tree
     }
 
@@ -68,7 +58,7 @@ std::shared_ptr<node> Expression_Parser::toTree()
     }
 }
 
-long double Expression_Parser::evaluateExpressionTree(const std::shared_ptr<node>& root)
+long double BuildingAST::evaluateExpressionTree(const std::shared_ptr<node>& root)
 {
     if (root == nullptr) return 0;
     //Evaluate each token as they should be evaluated using a recursive approach. This will result in a final answer

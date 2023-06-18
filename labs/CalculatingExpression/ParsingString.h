@@ -6,6 +6,6 @@
 
 const std::vector<std::string> getMathExpression(std::ifstream& fin);
 
-const int getOperatorPrecedance(const std::string& givenOperator);
+const int getOpPriority(const std::string& op);
 
-const bool isOperator(const std::string& givenOperator);
+const bool isOp(const std::string& op);

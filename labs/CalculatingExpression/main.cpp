@@ -25,19 +25,19 @@
 
 #include "ParsingString.h"
 #include "BuildingAST.h"
-#include "ConvertExpressionToPostFix.h"
+#include "convertExpressionToPostFix.h"
 
 int main()
 {
-	std::ifstream fin("example2.txt");
+	std::ifstream fin("cin10.txt");
 	std::ofstream fout("output.txt");
 
 	
-	toPostFix expr(getMathExpression(fin));
+	convertExpressionToPostFix expr(getMathExpression(fin));
 
-	Expression_Parser AST(expr.getPostFixExpression());
+	BuildingAST AST(expr.getPostFixExpression());
 
-	std::shared_ptr<node> expressionTree = AST.toTree();
+	std::shared_ptr<node> expressionTree = AST.convertToTree();
 
 	fout << std::fixed << std::setprecision(4) << AST.evaluateExpressionTree(expressionTree) << std::endl;
 }

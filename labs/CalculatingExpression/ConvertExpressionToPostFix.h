@@ -3,12 +3,12 @@
 
 #include "ParsingString.h"
 
-class toPostFix
+class convertExpressionToPostFix
 {
 public:
-    toPostFix(const std::vector<std::string>& givenInFixExpression);
+    convertExpressionToPostFix(const std::vector<std::string>& startExpression);
 
-    ~toPostFix() = default;
+    ~convertExpressionToPostFix() = default;
 
     const std::vector<std::string>& getPostFixExpression();
 
@@ -18,6 +18,6 @@ private:
 
     std::vector<std::string> postFixExpression;
 
-    std::vector<std::string> operatorStack;
+    std::vector<std::string> opStack;
 };
 

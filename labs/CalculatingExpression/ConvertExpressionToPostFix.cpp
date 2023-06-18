@@ -1,62 +1,61 @@
-#include "ConvertExpressionToPostFix.h"
+#include "convertExpressionToPostFix.h"
 
-toPostFix::toPostFix(const std::vector<std::string>& givenInFixExpression)
+convertExpressionToPostFix::convertExpressionToPostFix(const std::vector<std::string>& startExpression)
 {
-    inFixExpression = givenInFixExpression;//take in the post fix expression
+    inFixExpression = startExpression;
 }
 
-const std::vector<std::string>& toPostFix::getPostFixExpression()
+const std::vector<std::string>& convertExpressionToPostFix::getPostFixExpression()
 {
-    try
+    for (unsigned int i = 0; i < inFixExpression.size(); i++)
     {
-        for (unsigned int i = 0; i < inFixExpression.size(); i++)//loop through all tokens
+        std::string token = inFixExpression[i];
+        if (!isOp(token))
+            postFixExpression.emplace_back(token);
+        else
         {
-            std::string token = inFixExpression[i];//get the current token
-            if (!isOperator(token))//if the token is not a function and not an operator
-                postFixExpression.emplace_back(token);//add token to result
+            if (token == "(")
+                opStack.push_back(token);
+            else if (token == ")")
+            {
+                // Пока мы не достигнем (
+                while (!opStack.empty() && opStack[opStack.size() - 1] != "(") 
+                {
+                    // попаем из стека операторов в постфиксное выражание
+                    postFixExpression.emplace_back(opStack[opStack.size() - 1]);
+                    opStack.pop_back();
+                }
+                if (opStack.empty()) throw std::out_of_range("");
+                // не забываем убрать ( из стека операторов
+                opStack.pop_back();
+            }
             else
             {
-                if (token == "(")
-                    operatorStack.push_back(token);
-                else if (token == ")")
+                // если на стеке несколько операторов
+                int tokenOpPriority = getOpPriority(token);
+                // и приоритет слева направо
+                while (!opStack.empty() && getOpPriority(opStack[opStack.size() - 1]) >= tokenOpPriority)
                 {
-                    //while we dont have access to the ( 
-                    while (!operatorStack.empty() && operatorStack[operatorStack.size() - 1] != "(") {
-                        postFixExpression.emplace_back(operatorStack[operatorStack.size() - 1]);//put the top of the operator stack into the result
-                        operatorStack.pop_back();//remove the top of the operator stack
-                    }
-                    if (operatorStack.empty()) throw std::out_of_range("");
-                    operatorStack.pop_back();//when we have access to ( then remove it
-                }
-                else//if we have an operator
-                {
-                    //get the operator precedance of the token
-                    int tokenOperatorPrecedance = getOperatorPrecedance(token);
-                    while (!operatorStack.empty() && getOperatorPrecedance(operatorStack[operatorStack.size() - 1]) >= tokenOperatorPrecedance)//"and precedance is left to right"
-                    {//while the operator stack is not empty and the top of the operator stack has a greater operator 
-                     //precedance than the operator precedance of the token and the token is not right associative 
+                // пока стек операторов не пуст и вершина стека операторов имеет оператор большего приоритета 
+                    // и при это не оператор не правоассоциативный
+                    
+                    //^ могут быть сложены друг на друга
+                    if (token == "^" && (opStack[opStack.size() - 1] == "^"))
+                        break;
 
-                        //^ can be stacked on top of eachother but cant be stacked onto a function
-                        if (token == "^" && (operatorStack[operatorStack.size() - 1] == "^"))
-                            break;
-                        postFixExpression.emplace_back(operatorStack[operatorStack.size() - 1]);//put the top of the operator stack into the expression
-                        operatorStack.pop_back();//remove the top of the operator stack
-                    }
-                    operatorStack.push_back(token);//when we can finally insert the token then do so
+                    // пушим из стека операторов в постфиксное выражение
+                    postFixExpression.emplace_back(opStack[opStack.size() - 1]);
+                    opStack.pop_back();
                 }
+                opStack.push_back(token);
             }
         }
-        while (operatorStack.size() > 0)//push any remaining operators into the expression
-        {
-            postFixExpression.push_back(operatorStack[operatorStack.size() - 1]);
-            operatorStack.pop_back();
-        }
     }
-    catch (std::out_of_range&)
+    while (opStack.size() > 0) 
     {
-        std::cout << "ERROR : OUT OF RANGE.\n";
-        postFixExpression.clear();
+        // пушим все, что осталось
+        postFixExpression.push_back(opStack[opStack.size() - 1]);
+        opStack.pop_back();
     }
-
     return postFixExpression;
 }

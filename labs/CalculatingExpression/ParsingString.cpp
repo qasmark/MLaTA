@@ -5,65 +5,46 @@ const std::vector<std::string> getMathExpression(std::ifstream& fin)
 	std::string input;
     std::vector<std::string> mathExpression;
     std::string buildString = "";
+    char ch;
 
 	fin >> input;
 
     for (unsigned int i = 0; i < input.size(); i++)
     {
-        char character = input[i];   
+        ch = input[i];
+        if ((i == 0 || (input.size() > 0 && input[i - 1] == '(')) && ch == '-')
+            // добавление - для отрицательности числа
+            buildString += '-';
 
-        if ((i == 0 || //Start Scope
-            (input.size() > 0 && input[i - 1] == '(')) && //Open bracket scope
-            character == '-')//Negative deceleration
-            buildString += '-';//add a minus to the token so the following number can be build onto it
+        else if (isdigit(ch))
+            buildString += ch;
 
-        else if (isdigit(character) || character == '.')//if character is a number
-            buildString += character;//add to current token
-
-        else if (character == '^' ||//if character is an operator
-            character == '*' ||
-            character == '/' ||
-            character == '+' ||
-            character == '-' ||
-            character == '(' ||
-            character == ')')
+        else if (ch == '^' || ch == '*' || ch == '/' || ch == '+' || ch == '-' || ch == '(' || ch == ')')
         {
-            //Check if the operator is defining a negative
-            if ((i >= 1 && character == '-') &&
-                (input[i - 1] == '^' ||//if character is an operator
-                    input[i - 1] == '*' ||
-                    input[i - 1] == '/' ||
-                    input[i - 1] == '+' ||
-                    input[i - 1] == '-')
-                )
-
-                buildString += "-";//define the negative
-
-            else//define a binary operator
+            // проверка на унарный минус
+            if ((i >= 1 && ch == '-') && (input[i - 1] == '^' || input[i - 1] == '*' || input[i - 1] == '/' ||
+                    input[i - 1] == '+' || input[i - 1] == '-'))
+                buildString += "-";
+            // иначе бинарный оператор
+            else
             {
-                if (buildString.size() > 0)//Add token to expression if there is one
+                if (buildString.size() > 0)
                 {
-                    mathExpression.push_back(buildString);//push it to expression
-                    buildString = "";//reset token
+                    mathExpression.push_back(buildString);
+                    buildString = "";
                 }
-                buildString += character;//put operator into token (to convert to string)
-                mathExpression.push_back(buildString);//push token into expression
-                buildString = "";//reset token
+                buildString += ch;
+                mathExpression.push_back(buildString);
+                buildString = "";
             }
         }
-        else//if not a operand or operator then we must be taking in a function name
-            buildString += character;//add the character of the function to the token
     }
 
-    //once loop is complete
-    if (buildString.size() > 0)//Push the remaining token into the expression
+    if (buildString.size() > 0)
         mathExpression.push_back(buildString);
 
-
-    //loop through each token
-    for (size_t i = 0ull; i < mathExpression.size(); i++)
+    for (int i = 0; i < mathExpression.size(); i++)
     {
-        //if we cant read the next 3 tokens from i then stop loop
         if ((mathExpression.size() - i) < 3)
             break;
 
@@ -72,12 +53,12 @@ const std::vector<std::string> getMathExpression(std::ifstream& fin)
             token_two = mathExpression[i + 1],
             token_three = mathExpression[i + 2];
 
-        if (isOperator(token_one) && token_two == "-" && token_three == "(")
+        if (isOp(token_one) && token_two == "-" && token_three == "(")
         {
-            //remove the inverse of the bracket "-"
+            // убираем обратную скобку у "-"
             mathExpression.erase(mathExpression.begin() + i + 1);
 
-            //insert a "-1" after the bracket
+            // делаем костыль для унарного минуса
             mathExpression.insert(mathExpression.begin() + i + 2, "-1");
 
             mathExpression.insert(mathExpression.begin() + i + 3, "*");
@@ -106,50 +87,42 @@ const std::vector<std::string> getMathExpression(std::ifstream& fin)
 }
 
 
-const int getOperatorPrecedance(const std::string& givenOperator)
+const int getOpPriority(const std::string&  op)
 {
-    //get the precedance of the token
-    if (givenOperator == "^")
+    if (op == "^")
         return 4;
-    if (givenOperator == "*")
+    if (op == "*")
         return 3;
-    if (givenOperator == "/")
+    if (op == "/")
         return 3;
-    if (givenOperator == "+")
+    if (op == "+")
         return 2;
-    if (givenOperator == "-")
+    if (op == "-")
         return 2;
-    if (givenOperator == "(")
+    if (op == "(")
         return 1;
-    if (givenOperator == ")")
+    if (op == ")")
         return 1;
-    if (givenOperator == "cos")
-        return 5;
-    if (givenOperator == "tan")
-        return 5;
-    if (givenOperator == "sin")
-        return 5;
     else
         return 0;
 
 }
 
-const bool isOperator(const std::string& givenOperator)
+const bool isOp(const std::string& op)
 {
-    //determine if the token is an operator
-    if (givenOperator == "^")
+    if (op == "^")
         return true;
-    if (givenOperator == "*")
+    if (op == "*")
         return true;
-    if (givenOperator == "/")
+    if (op == "/")
         return true;
-    if (givenOperator == "+")
+    if (op == "+")
         return true;
-    if (givenOperator == "-")
+    if (op == "-")
         return true;
-    if (givenOperator == "(")
+    if (op == "(")
         return true;
-    if (givenOperator == ")")
+    if (op == ")")
         return true;
     return false;
 }
