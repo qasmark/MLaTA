@@ -29,8 +29,8 @@
 
 int main()
 {
-	std::ifstream fin("cin10.txt");
-	std::ofstream fout("output.txt");
+	std::ifstream fin("cin19.txt");
+	std::ofstream fout("cout19.txt");
 
 	
 	convertExpressionToPostFix expr(getMathExpression(fin));
